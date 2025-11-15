@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  glpi:
+    build: ./glpi
+    container_name: glpi_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Disable auto-install so GLPI does NOT intentar instalar solo
+      GLPI_SKIP_AUTOINSTALL: "true"
+
+      # Estas las podrías incluso quitar; el instalador web no las necesita,
+      # pero las dejamos por si más adelante querés usar auto-install.
+      GLPI_DB_HOST: db
+      GLPI_DB_NAME: glpidb
+      GLPI_DB_USER: glpi
+      GLPI_DB_PASSWORD: glpi_pass
+    ports:
+      - "8080:80"
+    volumes:
+      - glpi_config:/var/www/html/glpi/config
+      - glpi_files:/var/www/html/glpi/files
+      - ./glpi/plugins/formcreator:/var/www/glpi/plugins/formcreator 
+
+  db:
+    image: mariadb:10.11
+    container_name: glpi_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: glpidb
+      MYSQL_USER: glpi
+      MYSQL_PASSWORD: glpi_pass
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - glpi_db:/var/lib/mysql
+      - ./glpi/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  glpi_config:
+  glpi_files:
+  glpi_db:
