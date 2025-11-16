@@ -1,189 +1,265 @@
-# GLPI + FormCreator en Docker -- Guía Paso a Paso
+# 🚀 GLPI + FormCreator + API REST – Guía Completa
 
-## 0. Contexto del entorno
+Esta guía unificada cubre **todo el flujo completo**, desde instalar GLPI, importar formularios con FormCreator y finalmente consumirlos vía API REST desde otro servicio.
 
-Stack Docker usado:
+## 📖 Índice
 
--   **GLPI 10.0.19** (`glpi/glpi:10.0.19`)
--   **MariaDB 10.11** (`mariadb:10.11`)
--   Plugin **FormCreator 2.13.10** incluido en la imagen Docker
--   Volúmenes persistentes:
-    -   `glpi_config` → `/var/www/html/glpi/config`
-    -   `glpi_files` → `/var/www/html/glpi/files`
-    -   `glpi_db` → `/var/lib/mysql`
+1. 🔧 Instalación & configuración de GLPI (Docker)
+2. 📩 Importación de formularios FormCreator (versionados en Git)
+3. 🔌 Consumo de la API de GLPI (incluye ejemplos con Node.js)
 
-Base de datos:
+---
 
--   Host: `db`\
--   Database: `glpidb`\
--   User: `glpi`\
--   Password: `glpi_pass`\
--   Root password: `root_pass`
+# 1️⃣ Instalación y Configuración de GLPI
 
-------------------------------------------------------------------------
+## 1.1. Stack utilizado
 
-## 1. Levantar el entorno con Docker
+* GLPI **10.0.19**
+* MariaDB **10.11**
+* Plugin **FormCreator 2.13.10**
+* Docker + docker-compose
+* Volúmenes persistentes:
 
-Desde la carpeta raíz donde está `docker-compose.yml`:
+  * `glpi_config → /var/www/html/glpi/config`
+  * `glpi_files → /var/www/html/glpi/files`
+  * `glpi_db → /var/lib/mysql`
 
-``` bash
+## 1.2. Levantar el entorno
+
+```bash
 docker compose down -v --remove-orphans
 docker compose build --no-cache
 docker compose up -d
 ```
 
-Comprobar contenedores:
+Comprobar:
 
-``` bash
+```bash
 docker ps
 ```
 
-Resultados esperados:
+Esperado:
 
--   `glpi_db` → Up\
--   `glpi_app` → Up (puerto `8080:80`)
+* glpi_app → Up
+* glpi_db → Up
 
-------------------------------------------------------------------------
+## 1.3. Instalar GLPI
 
-## 2. Instalación inicial de GLPI
+Abrir:
 
-Abrir en un navegador:
+```
+http://localhost:8080
+```
 
-    http://localhost:8080
+Pasos del asistente:
 
-o\
-`http://IP_SERVIDOR:8080`
+1. Idioma
+2. Licencia
+3. Instalación
+4. Chequeos → OK
+5. Base de datos:
 
-### Pasos del asistente:
+   * Servidor: db
+   * Usuario: glpi
+   * Contraseña: glpi_pass
+   * Base: glpidb
+6. Terminar instalación
+7. Ir al login
 
-1.  **Idioma** → Continuar\
-2.  **Licencia** → Continuar\
-3.  Seleccionar **Instalación**\
-4.  **Chequeo de requisitos** → Continuar\
-5.  **Base de datos**
-    -   Servidor: `db`\
-    -   Usuario: `glpi`\
-    -   Contraseña: `glpi_pass`\
-    -   Base: `glpidb`\
-6.  GLPI creará las tablas\
-7.  GLPI mostrará los usuarios creados por defecto\
-8.  Ir a la pantalla de **Login**
+## 1.4. Primer login
 
-------------------------------------------------------------------------
-
-## 3. Primer login y ajustes básicos
-
-Entrar con:
-
--   Usuario: `glpi`
--   Contraseña: `glpi` (cambiable luego)
+```
+Usuario: glpi
+Contraseña: glpi
+```
 
 Recomendado:
 
--   Cambiar contraseña del admin\
--   Configurar idioma\
--   Revisar zona horaria (`America/Argentina/Buenos_Aires`)\
--   Ajustar nombre de la organización
+* Cambiar contraseña
+* Configurar zona horaria
+* Revisar nombre de la organización
 
-------------------------------------------------------------------------
+## 1.5. Activar FormCreator
 
-## 4. Activar plugin FormCreator
-
-1.  Menú: **Complementos**\
-2.  Buscar **FormCreator**\
-3.  Clic en **Activar**\
-4.  Confirmar que queda en estado **Activo**
-
-------------------------------------------------------------------------
-
-## 5. Importar tus formularios existentes
-
-Desde:
-
-**Administración → Formularios → Importar**
-
-Para cada archivo `.json`:
-
-1.  Importar\
-2.  Confirmar\
-3.  Verificar que aparece en la lista
-
-Revisar:
-
--   Permisos\
--   Destinos\
--   Categorías asociadas
-
-------------------------------------------------------------------------
-
-## 6. Configuración recomendada en GLPI
-
-### 6.1. Entidades
-
--   Administración → Entidades\
--   Ajustar nombre, zona horaria, mail, etc.
-
-### 6.2. Usuarios
-
--   Administración → Usuarios\
--   Crear usuarios
-
-### 6.3. Grupos
-
--   Administración → Grupos\
--   Ejemplos: Soporte Nivel 1, Infraestructura, Desarrollo
-
-### 6.4. Perfiles
-
--   Administración → Perfiles\
--   Ajustar permisos
-
-------------------------------------------------------------------------
-
-## 7. Configuración de correo
-
-### 7.1. Notificaciones SMTP
-
--   Configuración → Notificaciones → Configuración\
--   Configuración → Correo → SMTP
-
-### 7.2. Recolección de correo
-
--   Configuración → Correos recolectados
-
-------------------------------------------------------------------------
-
-## 8. FormCreator -- Buenas prácticas
-
--   Formularios bien nombrados\
--   Secciones claras\
--   Destinos revisados\
--   Permisos configurados\
--   Usuarios acceden desde **Auto-servicio → Formularios**
-
-------------------------------------------------------------------------
-
-## 9. Backups
-
-### 9.1. DB
-
-``` bash
-docker exec -i glpi_db mysqldump -uglpi -pglpi_pass glpidb > backup_glpi.sql
+```
+Menú → Configuración → Complementos → FormCreator → Instalar y Activar
 ```
 
-### 9.2. Archivos
+Estado debe quedar: **Activo**
 
-Volumen `glpi_files`.
+---
 
-------------------------------------------------------------------------
+# 2️⃣ Importar Formularios FormCreator (versionados)
 
-## 10. Resumen rápido
+Estos formularios se almacenan en el repo bajo `forms/formcreator` y son JSON exportados.
 
-1.  Levantar Docker\
-2.  Instalar GLPI\
-3.  Login como admin\
-4.  Activar FormCreator\
-5.  Importar formularios\
-6.  Configurar usuarios, grupos y perfiles\
-7.  Configurar correo\
-8.  Usar GLPI
+📌 Referencia original incluida en este proyecto
+
+## 2.1. Cómo importarlos
+
+1. Entrar como Super-Admin
+2. Ir a: **Administración → Formularios → Importar (Boton Crear para permitir JSON)**
+3. Seleccionar `form-xx-nombre.json`
+4. Verificar:
+
+   * Entidad
+   * Categoría destino
+   * Grupos asignados
+   * Permisos de usuario
+
+## 2.2. Formularios incluidos (ejemplos)
+
+* Solicitud de equipo
+* Alta de usuario
+* Solicitud de acceso VPN
+
+## 2.3. Buenas prácticas
+
+* Exportar cambios después de editar
+* Versionar JSONs en Git
+* Nombrar `form-XX-descriptivo.json`
+
+---
+
+# 3️⃣ Exponer & Consumir la API de GLPI
+
+## 3.1. Activar API REST
+
+```
+Configuración → General → API → Activar API REST, Activar acceso con credenciales y activar acceso con token externo
+```
+
+## 3.2. Crear Cliente API
+
+```
+Configuración  → General → API → Agregar cliente API (Nombre, Activo y regenar token)
+```
+
+Guarda el **App-Token**
+
+## 3.3. Crear User Token
+
+```
+Administración → Usuarios → (usuario glpi) → Usuario → Claves de acceso remoto (Token API) → Regenerar
+```
+
+Guarda el **User-Token**
+
+---
+
+# 3.4. Cliente Node.js de ejemplo
+
+## Variables `.env`
+
+```
+GLPI_APP_TOKEN=XXXXXXXXXXXXX
+GLPI_USER_TOKEN=XXXXXXXXXXXXX
+```
+
+## Código completo `index.js`
+
+```js
+require("dotenv").config();
+const axios = require("axios");
+
+const baseURL = "http://localhost:8080/apirest.php";
+const APP_TOKEN = process.env.GLPI_APP_TOKEN;
+const USER_TOKEN = process.env.GLPI_USER_TOKEN;
+
+async function getSessionToken() {
+  const res = await axios.get(`${baseURL}/initSession`, {
+    headers: {
+      "App-Token": APP_TOKEN,
+      Authorization: `user_token ${USER_TOKEN}`,
+    },
+  });
+
+  return res.data.session_token;
+}
+
+async function getForms() {
+  const session = await getSessionToken();
+
+  const res = await axios.get(`${baseURL}/PluginFormcreatorForm`, {
+    headers: {
+      "Session-Token": session,
+      "App-Token": APP_TOKEN,
+    },
+  });
+
+  return res.data;
+}
+
+getForms()
+  .then(forms => console.log(forms))
+  .catch(err => console.error(err.response?.data || err.message));
+```
+
+## Ejecutar
+
+```bash
+npm install
+npm run dev
+```
+
+Salida esperada (ejemplo):
+
+```
+[
+  {
+    id: 1,
+    name: "Solicitud de equipo",
+    ...
+  }
+]
+```
+
+---
+
+# 🔍 Endpoints comunes de FormCreator
+
+| Acción               | Endpoint                      |
+| -------------------- | ----------------------------- |
+| Obtener formularios  | `/PluginFormcreatorForm`      |
+| Obtener respuestas   | `/PluginFormcreatorAnswer`    |
+| Crear ticket vía API | `/Ticket`                     |
+| Crear formulario     | (no soportado vía API nativa) |
+
+---
+
+# 📌 Resumen rápido
+
+| Paso | Acción                                |
+| ---- | ------------------------------------- |
+| 1    | Levantar GLPI con Docker              |
+| 2    | Instalar GLPI y activar FormCreator   |
+| 3    | Importar formularios JSON             |
+| 4    | Habilitar API REST                    |
+| 5    | Crear App-Token y User-Token          |
+| 6    | Consumir API desde cualquier servicio |
+
+---
+
+# 📦 Extras
+
+* Backup DB: `docker exec -i glpi_db mysqldump -uglpi -pglpi_pass glpidb > backup.sql`
+* Volúmenes persistentes incluyen archivos y config
+* Formularios pueden exportarse y versionarse en Git
+
+---
+
+# 📚 Referencias
+
+* GLPI Docs: [https://glpi-project.org](https://glpi-project.org)
+* API REST Docs: `http://tu-glpi/apirest.php`
+* Basado en guías internas del proyecto: fileciteturn0file1
+
+---
+
+# 🎯 Objetivo final
+
+Con esta guía puedes:
+✔ Instalar GLPI rápido
+✔ Versionar formularios
+✔ Consumir los formularios vía API en cualquier app (Node.js, Python, etc.)
+✔ Automatizar flujos de soporte, onboarding, accesos y más 🚀
