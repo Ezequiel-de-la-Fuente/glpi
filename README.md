@@ -119,6 +119,47 @@ Estos formularios se almacenan en el repo bajo `forms/formcreator` y son JSON ex
 * Versionar JSONs en Git
 * Nombrar `form-XX-descriptivo.json`
 
+## 2.4 Configuración de generación automática de tickets (FormCreator)
+
+Para que los formularios generen tickets automáticamente al ser enviados, es necesario configurar un destino de tipo Ticket en el plugin FormCreator.
+
+### Pasos de configuración
+
+1. Ingresar a GLPI como usuario administrador.
+2. Ir a: Administración → Formularios.
+3. Seleccionar el formulario correspondiente.
+4. Ingresar en la pestaña: Destino.
+5. Hacer clic en: + Agregar un destino.
+6. Completar los siguientes campos:
+   - Nombre: Generar Ticket [Nombre del formulario]
+   - Tipo: Ticket
+7. Presionar Agregar.
+
+### Configuración del destino
+
+Una vez creado el destino:
+
+1. Hacer clic sobre el destino creado.
+
+2. En la sección Condición, dejar configurado:
+   - Generar siempre.
+
+4. Guardar los cambios.
+
+### Funcionamiento
+
+A partir de esta configuración, cada vez que un usuario complete y envíe el formulario:
+
+- Se generará automáticamente un ticket en GLPI.
+- El ticket incluirá todas las respuestas del formulario.
+- El ticket quedará registrado en el módulo de Asistencia.
+
+La verificación puede realizarse accediendo a:
+
+Asistencia → Tickets
+
+
+
 ---
 
 # 3️⃣ Exponer & Consumir la API de GLPI
